@@ -5,11 +5,18 @@ El proyecto consta de una api documentada con un CRUD de peliculas, esta api tie
 
 ## Instalación
 Para instalar el proyecto se debe clonar el repositorio como primer paso. Una vez clonado el repositorio se deben seguir los siguientes pasos:
-1. Crear un entorno virtual
+
+1. Crear el archivo .env en la raíz del proyecto y agregar la siguiente variable de entorno:
+    ```plaintext
+    TOKEN_KEY='texto secreto'
+    ```
+
+2. Crear un entorno virtual
     ```sh
     python -m venv env
     ```
-2. Activar el entorno virtual
+
+3. Activar el entorno virtual
     
     Para Windows:
     ```sh
@@ -21,7 +28,7 @@ Para instalar el proyecto se debe clonar el repositorio como primer paso. Una ve
     source env/bin/activate
     ```
 
-3. Instalar las dependencias
+4. Instalar las dependencias
     ```sh
     pip install -r requirements.txt
     ```
