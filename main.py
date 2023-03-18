@@ -1,46 +1,30 @@
-from fastapi import FastAPI,Body,Path,Query,Request,Depends, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse # Para poder usar respuestas en HTML y JSON
-from pydantic import BaseModel, Field # Para poder usar modelos de datos y validaciones
-from typing import Optional,List # Para poder usar tipos de datos opcionales y listas
+from pydantic import BaseModel # Para poder usar modelos de datos
 from fastapi.security import HTTPBearer # Para poder usar autenticación por token
 from jwt_manager import create_token,validate_token # Importar funciones para crear y validar token
+from config.database import engine, Base # Para poder usar la base de datos
+from middlewares.error_handler import ErrorHandler # Importar el middleware para manejar los errores
+from routers.movie import movie_router # Importar el router de la API
 
+# Caracteristicas de la API en la documentación
 app = FastAPI() # Crear una instancia de FastAPI
 app.title = "My First API" # Titulo de la API
 app.version = "0.0.1" # Version de la API
 
-# Clase para autenticar al usuario con token
-class JWTBearer(HTTPBearer):
-    async def __call__(self, request:Request): # request: objeto que contiene la información de la petición
-        aut= await super().__call__(request) # Se obtiene el token de la petición HTTP
-        data=validate_token(aut.credentials) # Se valida el token
-        if data['email'] != "admin@gmail.com" and data['password'] != "admin": # Se valida el usuario y contraseña
-            raise HTTPException(status_code=403,detail="Invalid credentials") # Se lanza una excepción si el usuario o contraseña son incorrectos
+# Agregar el middleware para manejar los errores
+app.add_middleware(ErrorHandler) 
+
+# Agregar el router de la API
+app.include_router(movie_router) 
+
+# Crear las tablas en la base de datos si no existen
+Base.metadata.create_all(bind=engine) 
+
 
 class User(BaseModel):
     email:str
     password:str
-
-class Movie(BaseModel): # Crear un esquema de datos para la API
-    id:Optional[int]=None # id de tipo entero y opcional con valor por defecto None
-    title:str=Field(min_length=5,max_length=15)
-    overview:str=Field(min_length=15,max_length=50)
-    year:int=Field(gt=1900,le=2022) # gt: mayor que, le: menor o igual que
-    rating:float=Field(ge=0.0,le=10.0)
-    category:str=Field(min_length=3,max_length=20)
-    
-    # método para mostrar un ejemplo de los datos que se deben enviar
-    class Config:
-        schema_extra = {
-            "example":{
-                "id":1,
-                "title":"Mí película",
-                "overview":"Descripción de la película",
-                "year":2021,
-                "rating":9.8,
-                "category":"Acción"
-            }
-        }
 
 movies = [
     {
@@ -77,70 +61,3 @@ def login(user:User) -> str:
         return JSONResponse(status_code=200, content=token)
     return JSONResponse(status_code=401, content="Invalid credentials")
 
-# Ruta para obtener todas las películas
-@app.get('/movies',tags=['movies'],response_model=List[Movie],status_code=200,dependencies=[Depends(JWTBearer())])
-def get_movies() -> List[Movie]:
-    return JSONResponse(status_code=200, content=movies) # Respuesta en JSON
-
-#------------------------------------------------------#
-# ---------------  Parametros de ruta ---------------- #
-#------------------------------------------------------#
-
-@app.get('/movies/{movie_id}',tags=['movies'],response_model=Movie)
-def get_movie(movie_id:int=Path(ge=1,le=2000)) -> Movie:
-    for item in movies:
-        if item['id'] == movie_id:
-            return JSONResponse(status_code=200, content=item)
-    
-    return JSONResponse(status_code=404, content=[])
-
-#-------------------------------------------------------#
-# ---------------  Parametros de query ---------------- #
-#-------------------------------------------------------#
-
-@app.get("/movies/",tags=['movies'],response_model=List[Movie])
-def get_movies_by_category(category:str=Query(min_length=5,max_length=15)) -> List[Movie]:
-    for item in movies:
-        if item['category'] == category:
-            return JSONResponse(status_code=200, content=item)
-    
-    return JSONResponse(status_code=404, content=[])
-
-#-------------------------------------------------------#
-# --------------- Metodo POST ------------------------- #
-#-------------------------------------------------------#
-
-@app.post('/movies',tags=['movies'],response_model=dict,status_code=201)
-def create_movie(movie:Movie) -> dict:
-    movies.append(movie)
-    return JSONResponse(status_code=201, content={'message':'Movie created successfully'})
-
-# ------------------------------------------------------#
-# --------------- Metodo PUT -------------------------- #
-# ------------------------------------------------------#
-
-@app.put('/movies/{movie_id}',tags=['movies'],response_model=dict,status_code=200)
-def update_movie(movie_id:int,movie:Movie) -> dict:
-    for item in movies:
-        if item["id"]==movie_id:
-            item["title"]=movie.title
-            item["overview"]=movie.overview
-            item["year"]=movie.year
-            item["rating"]=movie.rating
-            item["category"]=movie.category
-            return JSONResponse(status_code=200, content={'message':'Movie updated successfully'})
-    
-    return JSONResponse(status_code=404, content=[])
-
-# ------------------------------------------------------#
-# --------------- Metodo DELETE ----------------------- #
-# ------------------------------------------------------#
-
-@app.delete('/movies/{movie_id}',tags=['movies'],response_model=dict,status_code=200) # Parámetro de tipo path o de ruta
-def delete_movie(movie_id:int) -> dict:
-    for item in movies:
-        if item["id"]==movie_id:
-            movies.remove(item)
-            return JSONResponse(status_code=200, content={'message':'Movie deleted successfully'})
-    
-    return JSONResponse(status_code=404, content=[])
