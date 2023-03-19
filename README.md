@@ -38,7 +38,7 @@ Para ejecutar el proyecto se ejecuta el siguiente comando:
 ```sh
 uvicorn main:app --reload
 ```
-Esto iniciará el servidor en el puerto 8000.
+Esto iniciará el servidor en el puerto 8000. NOTA: Para iniciarlo en otro puerto se debe agregar el parámetro ```--port=puerto```.
 
 Para acceder a la documentación de la api se debe ingresar a la siguiente url:
 ```sh
