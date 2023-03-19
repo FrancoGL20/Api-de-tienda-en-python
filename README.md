@@ -6,7 +6,7 @@ El proyecto consta de una api documentada con un CRUD de peliculas, esta api tie
 ## Instalación
 Para instalar el proyecto se debe clonar el repositorio como primer paso. Una vez clonado el repositorio se deben seguir los siguientes pasos:
 
-1. Crear el archivo .env en la raíz del proyecto y agregar la siguiente variable de entorno:
+1. Crear el archivo ".env" en la raíz del proyecto y agregar la siguiente variable de entorno:
     ```plaintext
     TOKEN_KEY='texto secreto'
     ```
