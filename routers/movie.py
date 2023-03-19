@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException # Para poder usar rutas, d
 from models.movie import Movie as MovieModel # Importar el modelo de datos de la tabla movies
 from services.movie import MovieService # Importar el servicio para manejar las operaciones de la tabla movies
 from schemas.movie import Movie # Importar el esquema de datos para las películas
+from middlewares.jwt_bearer import JWTBearer # Importar el middleware para manejar la autenticación por token
 
 # Crear una instancia de la clase APIRouter para poder crear rutas dentro de un router
 movie_router=APIRouter()
@@ -39,7 +40,7 @@ def get_movie(movie_id:int=Path(ge=1,le=2000)) -> Movie:
 
 
 # Ruta para obtener las películas por categoría
-@movie_router.get("/movies/",tags=['movies'],response_model=List[Movie])
+@movie_router.get("/movies/",tags=['movies'],response_model=List[Movie],dependencies=[Depends(JWTBearer())])
 def get_movies_by_category(category:str=Query(min_length=5,max_length=15)) -> List[Movie]:
     # Obtener los registros de la tabla movies con la categoría indicada
     result=MovieService().get_movies_by_categoy(category)
